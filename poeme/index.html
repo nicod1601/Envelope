@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lettre d'Amour Animée</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            height: 100vh;
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Georgia', serif;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Cœurs flottants en arrière-plan */
+        .floating-hearts {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 0;
+        }
+
+        .floating-heart {
+            position: absolute;
+            font-size: 20px;
+            color: rgba(255, 182, 193, 0.6);
+            animation: floatUp 8s infinite linear;
+        }
+
+        @keyframes floatUp {
+            0% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        .container {
+            position: relative;
+            width: 400px;
+            height: 300px;
+            z-index: 1;
+        }
+
+        /* ENVELOPPE */
+        .envelope {
+            position: absolute;
+            width: 320px;
+            height: 220px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            cursor: pointer;
+            transition: all 1s cubic-bezier(0.4, 0.0, 0.2, 1);
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .envelope.disappear {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.2) rotateY(180deg);
+            visibility: hidden;
+        }
+
+        .envelope-body {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(145deg, #ffffff, #f8f8f8);
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+        }
+
+        .envelope-back {
+            position: absolute;
+            width: 100%;
+            height: 60%;
+            bottom: 0;
+            background: linear-gradient(145deg, #ffffff, #f0f0f0);
+            border-radius: 0 0 8px 8px;
+        }
+
+        .envelope-flap {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 50%;
+            background: linear-gradient(145deg, #ff6b9d, #e91e63);
+            z-index: 3;
+            transform-origin: bottom center;
+            transition: transform 0.6s ease;
+            clip-path: polygon(0 0, 100% 0, 50% 100%);
+            box-shadow: 0 5px 15px rgba(233, 30, 99, 0.3);
+        }
+
+        .envelope-flap::before {
+            content: '';
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 30px;
+            height: 30px;
+            background: rgba(255,255,255,0.9);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .envelope-flap::after {
+            content: '💕';
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.2em;
+            z-index: 1;
+        }
+
+        .envelope:hover .envelope-flap {
+            transform: translateY(-5px);
+        }
+
+        /* LETTRE D'AMOUR */
+        .love-letter {
+            position: absolute;
+            width: 450px;
+            height: 600px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: linear-gradient(145deg, #fffef7, #fff8f0);
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 1s cubic-bezier(0.4, 0.0, 0.2, 1);
+            z-index: 10;
+            overflow: hidden;
+        }
+
+        .love-letter.appear {
+            opacity: 1;
+            visibility: visible;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .letter-header {
+            height: 60px;
+            background: linear-gradient(90deg, #ff6b9d, #e91e63);
+            border-radius: 12px 12px 0 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            box-shadow: 0 2px 8px rgba(233, 30, 99, 0.3);
+        }
+
+        .letter-header::before {
+            content: '💖';
+            font-size: 2em;
+            animation: heartBeat 2s infinite;
+        }
+
+        .letter-content {
+            padding: 30px;
+            height: calc(100% - 60px);
+            overflow-y: auto;
+            line-height: 1.6;
+        }
+
+        .letter-title {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #8b0000;
+            text-align: center;
+            margin-bottom: 25px;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 0.8s ease forwards 0.3s;
+            font-family: 'Georgia', serif;
+        }
+
+        .decorative-line {
+            width: 100px;
+            height: 2px;
+            background: linear-gradient(90deg, #ff6b9d, #e91e63);
+            margin: 20px auto;
+            opacity: 0;
+            transform: scaleX(0);
+            animation: expandLine 0.8s ease forwards 0.6s;
+        }
+
+        .love-message {
+            font-size: 1.1em;
+            color: #333;
+            text-align: left;
+            margin: 25px 0;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 1s ease forwards 0.8s;
+            font-family: 'Georgia', serif;
+        }
+
+        .love-message p {
+            margin-bottom: 18px;
+            text-indent: 20px;
+        }
+
+        .signature {
+            text-align: right;
+            font-size: 1.3em;
+            color: #8b0000;
+            font-style: italic;
+            opacity: 0;
+            transform: translateX(20px);
+            animation: fadeInRight 1s ease forwards 1.2s;
+            margin-top: 30px;
+            font-family: 'Georgia', serif;
+        }
+
+        /* ANIMATIONS */
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInRight {
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* PARTICULES EN FORME DE CŒUR */
+        .heart-sparkles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 15;
+        }
+
+        .heart-sparkle {
+            position: absolute;
+            font-size: 16px;
+            color: #ff69b4;
+            opacity: 0;
+        }
+
+        .heart-sparkle.animate {
+            animation: heartSparkle 3s ease-out forwards;
+        }
+
+        @keyframes heartSparkle {
+            0% {
+                opacity: 1;
+                transform: translate(0, 0) scale(0) rotate(0deg);
+            }
+            50% {
+                opacity: 1;
+                transform: translate(var(--dx), var(--dy)) scale(1.2) rotate(180deg);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(calc(var(--dx) * 1.5), calc(var(--dy) * 1.5)) scale(0) rotate(360deg);
+            }
+        }
+
+        /* INSTRUCTION */
+        .instruction {
+            position: absolute;
+            bottom: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(139, 0, 0, 0.8);
+            font-size: 1.3em;
+            text-align: center;
+            transition: opacity 0.5s ease;
+            font-weight: bold;
+            text-shadow: 0 2px 4px rgba(255,255,255,0.5);
+        }
+
+        .instruction.hidden {
+            opacity: 0;
+        }
+
+        /* BOUTON RETOUR */
+        .back-button {
+            position: absolute;
+            top: -80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(45deg, #ff69b4, #ff1493);
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 1.1em;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(255, 20, 147, 0.4);
+            font-weight: bold;
+        }
+
+        .back-button.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .back-button:hover {
+            transform: translateX(-50%) translateY(-5px) scale(1.05);
+            box-shadow: 0 8px 25px rgba(255, 20, 147, 0.6);
+        }
+
+        /* Animation de pulsation romantique */
+        .envelope:not(.disappear) {
+            animation: romanticPulse 4s infinite;
+        }
+
+        @keyframes romanticPulse {
+            0%, 100% { 
+                transform: translate(-50%, -50%) scale(1);
+                box-shadow: 0 0 0 0 rgba(255, 105, 180, 0.4);
+            }
+            50% { 
+                transform: translate(-50%, -50%) scale(1.08);
+                box-shadow: 0 0 0 20px rgba(255, 105, 180, 0);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 480px) {
+            .envelope {
+                width: 280px;
+                height: 180px;
+            }
+            
+            .love-letter {
+                width: 350px;
+                height: 500px;
+            }
+            
+            .letter-title {
+                font-size: 1.5em;
+            }
+            
+            .love-message {
+                font-size: 1em;
+            }
+            
+            .letter-content {
+                padding: 25px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Cœurs flottants -->
+    <div class="floating-hearts" id="floatingHearts"></div>
+
+    <div class="container">
+        <!-- ENVELOPPE -->
+        <div class="envelope" id="envelope">
+            <div class="envelope-body">
+                <div class="envelope-back"></div>
+            </div>
+            <div class="envelope-flap"></div>
+        </div>
+
+        <!-- LETTRE D'AMOUR -->
+        <div class="love-letter" id="loveLetter">
+            <div class="letter-header"></div>
+            <div class="letter-content">
+                <div class="letter-title">Mon cœur pour toi</div>
+                <div class="decorative-line"></div>
+                
+                <div class="love-message">
+                    <p style="font-style: italic; text-align: center; line-height: 1.8;">
+                        C'est la première fois que mon cœur s'éveille,<br>
+                        Sous ton regard, la vie devient plus belle.<br>
+                        Mes sentiments grandissent, jour après jour,<br>
+                        Ils murmurent ton nom, ils crient ton amour.
+                    </p>
+                    
+                    <p style="font-style: italic; text-align: center; line-height: 1.8;">
+                        Tu as fait un choix, je le respecte en silence,<br>
+                        Mais mon cœur persiste, avec patience.<br>
+                        J'attendrai le temps qu'il faudra,<br>
+                        Car je sais que mon âme te choisit, toi.
+                    </p>
+                    
+                    <p style="font-style: italic; text-align: center; line-height: 1.8;">
+                        Mes sentiments sont discrets, parfois cachés,<br>
+                        Mais au fond, ils brûlent, intenses, enflammés.<br>
+                        Comme tes yeux, éclat d'étoiles dans la nuit,<br>
+                        Ils guident mon cœur, ils éclairent ma vie.
+                    </p>
+                    
+                    <p style="font-style: italic; text-align: center; line-height: 1.8;">
+                        Je ne veux personne d'autre, toi seule existe,<br>
+                        Dans mes rêves, mes pensées, ton image persiste.<br>
+                        Et si l'avenir doit me mettre à l'épreuve,<br>
+                        Je resterai fidèle, à toi, à cette preuve.
+                    </p>
+                </div>
+
+        </div>
+
+        <!-- BOUTON RETOUR -->
+        <button class="back-button" id="backButton">💕 Fermer la lettre 💕</button>
+
+        <!-- INSTRUCTION -->
+        <div class="instruction" id="instruction">💌 Cliquez pour ouvrir votre lettre d'amour 💌</div>
+
+        <!-- PARTICULES -->
+        <div class="heart-sparkles" id="heartSparkles"></div>
+    </div>
+
+    <script>
+        const envelope = document.getElementById('envelope');
+        const loveLetter = document.getElementById('loveLetter');
+        const backButton = document.getElementById('backButton');
+        const instruction = document.getElementById('instruction');
+        const heartSparklesContainer = document.getElementById('heartSparkles');
+        const floatingHeartsContainer = document.getElementById('floatingHearts');
+        
+        let isOpen = false;
+
+        // Créer des cœurs flottants en arrière-plan
+        function createFloatingHearts() {
+            const hearts = ['💖', '💕', '💗', '💝', '💘', '💞'];
+            
+            setInterval(() => {
+                const heart = document.createElement('div');
+                heart.className = 'floating-heart';
+                heart.textContent = hearts[Math.floor(Math.random() * hearts.length)];
+                heart.style.left = Math.random() * 100 + '%';
+                heart.style.animationDelay = Math.random() * 2 + 's';
+                heart.style.fontSize = (Math.random() * 10 + 15) + 'px';
+                
+                floatingHeartsContainer.appendChild(heart);
+                
+                setTimeout(() => {
+                    if (heart.parentNode) {
+                        heart.parentNode.removeChild(heart);
+                    }
+                }, 8000);
+            }, 500);
+        }
+
+        function createHeartSparkles() {
+            const heartEmojis = ['💖', '💕', '💗', '💝', '💘', '💞', '❤️', '💓'];
+            const numberOfHearts = 25;
+            
+            for (let i = 0; i < numberOfHearts; i++) {
+                const heartSparkle = document.createElement('div');
+                heartSparkle.className = 'heart-sparkle';
+                heartSparkle.textContent = heartEmojis[Math.floor(Math.random() * heartEmojis.length)];
+                
+                // Position de départ au centre
+                const startX = 200;
+                const startY = 150;
+                
+                // Direction aléatoire
+                const angle = (Math.PI * 2 * i) / numberOfHearts + (Math.random() - 0.5) * 0.8;
+                const distance = 100 + Math.random() * 150;
+                const dx = Math.cos(angle) * distance;
+                const dy = Math.sin(angle) * distance;
+                
+                heartSparkle.style.left = startX + 'px';
+                heartSparkle.style.top = startY + 'px';
+                heartSparkle.style.setProperty('--dx', dx + 'px');
+                heartSparkle.style.setProperty('--dy', dy + 'px');
+                
+                heartSparklesContainer.appendChild(heartSparkle);
+                
+                // Délai échelonné
+                setTimeout(() => {
+                    heartSparkle.classList.add('animate');
+                }, i * 80);
+                
+                // Nettoyer
+                setTimeout(() => {
+                    if (heartSparkle.parentNode) {
+                        heartSparkle.parentNode.removeChild(heartSparkle);
+                    }
+                }, 3000 + i * 80);
+            }
+        }
+
+        function openLoveLetter() {
+            if (!isOpen) {
+                // Faire disparaître l'enveloppe
+                envelope.classList.add('disappear');
+                instruction.classList.add('hidden');
+                
+                // Créer les particules en forme de cœur
+                createHeartSparkles();
+                
+                // Faire apparaître la lettre d'amour
+                setTimeout(() => {
+                    loveLetter.classList.add('appear');
+                    backButton.classList.add('show');
+                }, 500);
+                
+                isOpen = true;
+            }
+        }
+
+        function closeLoveLetter() {
+            if (isOpen) {
+                // Faire disparaître la lettre
+                loveLetter.classList.remove('appear');
+                backButton.classList.remove('show');
+                
+                // Faire réapparaître l'enveloppe
+                setTimeout(() => {
+                    envelope.classList.remove('disappear');
+                    instruction.classList.remove('hidden');
+                }, 500);
+                
+                isOpen = false;
+            }
+        }
+
+        // Événements
+        envelope.addEventListener('click', openLoveLetter);
+        backButton.addEventListener('click', closeLoveLetter);
+
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', function() {
+            // Animation d'entrée de l'enveloppe
+            envelope.style.transform = 'translate(-50%, -50%) scale(0.3)';
+            envelope.style.opacity = '0';
+            
+            setTimeout(() => {
+                envelope.style.transition = 'all 1.2s cubic-bezier(0.4, 0.0, 0.2, 1)';
+                envelope.style.transform = 'translate(-50%, -50%) scale(1)';
+                envelope.style.opacity = '1';
+            }, 300);
+
+            // Commencer les cœurs flottants
+            createFloatingHearts();
+        });
+    </script>
+</body>
+</html>
