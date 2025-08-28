@@ -163,6 +163,61 @@
             transform: scale(1.1);
         }
 
+        /* Bouton de contrôle musical */
+        .music-control {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 55px;
+            height: 55px;
+            background: linear-gradient(145deg, #ff6b9d, #e91e63);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.6em;
+            color: white;
+            box-shadow: 0 5px 20px rgba(233, 30, 99, 0.4);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            user-select: none;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .music-control:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 30px rgba(233, 30, 99, 0.6);
+        }
+
+        .music-control:active {
+            transform: scale(0.95);
+        }
+
+        /* Indicateur de piste */
+        .track-info {
+            position: fixed;
+            top: 85px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 8px 12px;
+            color: white;
+            font-size: 0.8em;
+            text-align: center;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            z-index: 999;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .track-info.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
         /* Animations */
         @keyframes fadeInUp {
             to {
@@ -176,6 +231,15 @@
                 opacity: 1;
                 transform: translateY(0);
             }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .playing {
+            animation: pulse 2s infinite;
         }
 
         /* Responsive */
@@ -193,6 +257,18 @@
             .envelope-visual {
                 width: 100px;
                 height: 65px;
+            }
+
+            .music-control {
+                width: 45px;
+                height: 45px;
+                font-size: 1.3em;
+            }
+
+            .track-info {
+                right: 15px;
+                font-size: 0.7em;
+                padding: 6px 10px;
             }
         }
 
@@ -256,10 +332,216 @@
                 </div>
                 <div class="envelope-label">Ombre et Lumière</div>
             </div>
+
+
+            <div class="envelope-item" onclick="openLetter('VM')">
+                <div class="envelope-visual">
+                    <div class="envelope-body"></div>
+                    <div class="envelope-flap"></div>
+                    <div class="envelope-icon"></div>
+                </div>
+                <div class="envelope-label">Mérite mieux</div>
+            </div>
+
         </div>
+
+
     </div>
 
+    <!-- Contrôles audio -->
+    <div class="music-control" id="musicControl" onclick="toggleMusic()">🎵</div>
+    <div class="track-info" id="trackInfo">♪ Musique d'ambiance</div>
+
     <script>
+        // ===== SYSTÈME AUDIO AUTOMATIQUE =====
+        let audioPlayer = null;
+        let isPlaying = false;
+        let userInteracted = false;
+        let currentTrack = 0;
+
+        // Liste des musiques d'ambiance (remplacez par vos fichiers)
+        const musicPlaylist = [
+            'audio.mp3'
+        ];
+
+        // Noms des pistes pour l'affichage
+        const trackNames = [
+            'Ambiance Romantique',
+            'Douce Mélodie',
+            'Cœur Tendre',
+            'Amour Éternel'
+        ];
+
+        // Initialisation de l'audio
+        function initializeAudio() {
+            if (!audioPlayer) {
+                audioPlayer = document.createElement('audio');
+                audioPlayer.loop = false;
+                audioPlayer.volume = 0.25; // Volume doux
+                audioPlayer.preload = 'auto';
+                
+                // Événements audio
+                audioPlayer.addEventListener('ended', playNextTrack);
+                audioPlayer.addEventListener('error', handleAudioError);
+                audioPlayer.addEventListener('loadstart', showTrackInfo);
+                audioPlayer.addEventListener('canplay', hideTrackInfoDelay);
+                
+                document.body.appendChild(audioPlayer);
+            }
+            
+            loadTrack(currentTrack);
+        }
+
+        // Charger une piste
+        function loadTrack(trackIndex) {
+            if (musicPlaylist.length > 0 && trackIndex < musicPlaylist.length) {
+                audioPlayer.src = musicPlaylist[trackIndex];
+                audioPlayer.load();
+                updateTrackInfo(trackIndex);
+            }
+        }
+
+        // Piste suivante
+        function playNextTrack() {
+            currentTrack = (currentTrack + 1) % musicPlaylist.length;
+            loadTrack(currentTrack);
+            if (isPlaying) {
+                setTimeout(() => playMusic(), 500);
+            }
+        }
+
+        // Démarrer la musique
+        function playMusic() {
+            if (audioPlayer && !isPlaying) {
+                audioPlayer.play().then(() => {
+                    isPlaying = true;
+                    updateMusicButton('🎶');
+                    addPlayingAnimation();
+                    showTrackInfo();
+                }).catch(error => {
+                    console.log('Lecture automatique bloquée:', error);
+                    updateMusicButton('🔇');
+                });
+            }
+        }
+
+        // Arrêter la musique
+        function stopMusic() {
+            if (audioPlayer && isPlaying) {
+                audioPlayer.pause();
+                isPlaying = false;
+                updateMusicButton('🎵');
+                removePlayingAnimation();
+                hideTrackInfo();
+            }
+        }
+
+        // Basculer la musique
+        function toggleMusic() {
+            userInteracted = true;
+            if (isPlaying) {
+                stopMusic();
+            } else {
+                playMusic();
+            }
+        }
+
+        // Mettre à jour le bouton
+        function updateMusicButton(icon) {
+            const button = document.getElementById('musicControl');
+            if (button) {
+                button.innerHTML = icon;
+            }
+        }
+
+        // Animation de lecture
+        function addPlayingAnimation() {
+            const button = document.getElementById('musicControl');
+            if (button) {
+                button.classList.add('playing');
+            }
+        }
+
+        function removePlayingAnimation() {
+            const button = document.getElementById('musicControl');
+            if (button) {
+                button.classList.remove('playing');
+            }
+        }
+
+        // Afficher les infos de piste
+        function showTrackInfo() {
+            const trackInfo = document.getElementById('trackInfo');
+            if (trackInfo) {
+                trackInfo.classList.add('show');
+            }
+        }
+
+        function hideTrackInfo() {
+            const trackInfo = document.getElementById('trackInfo');
+            if (trackInfo) {
+                trackInfo.classList.remove('show');
+            }
+        }
+
+        function hideTrackInfoDelay() {
+            setTimeout(hideTrackInfo, 3000);
+        }
+
+        // Mettre à jour les infos de piste
+        function updateTrackInfo(trackIndex) {
+            const trackInfo = document.getElementById('trackInfo');
+            if (trackInfo && trackNames[trackIndex]) {
+                trackInfo.innerHTML = `♪ ${trackNames[trackIndex]}`;
+            }
+        }
+
+        // Gestion des erreurs
+        function handleAudioError(e) {
+            console.error('Erreur audio:', e);
+            if (musicPlaylist.length > 1) {
+                playNextTrack();
+            }
+        }
+
+        // Détecter l'interaction utilisateur
+        function detectUserInteraction() {
+            if (!userInteracted) {
+                userInteracted = true;
+                setTimeout(() => {
+                    playMusic();
+                }, 800);
+            }
+        }
+
+        // Configuration initiale
+        function setupAutoMusic() {
+            initializeAudio();
+            
+            // Écouter les interactions
+            const interactionEvents = ['click', 'touchstart', 'keydown', 'mousemove'];
+            
+            const handleInteraction = () => {
+                detectUserInteraction();
+                interactionEvents.forEach(event => {
+                    document.removeEventListener(event, handleInteraction);
+                });
+            };
+            
+            interactionEvents.forEach(event => {
+                document.addEventListener(event, handleInteraction, { passive: true });
+            });
+            
+            // Essai de lecture automatique
+            setTimeout(() => {
+                if (!userInteracted) {
+                    playMusic();
+                }
+            }, 2000);
+        }
+
+        // ===== FONCTIONS EXISTANTES =====
+
         // Créer des cœurs flottants
         function createFloatingHearts() {
             const hearts = ['💕', '💖', '💗', '💝', '❤️'];
@@ -285,8 +567,12 @@
 
         // Ouvrir une lettre
         function openLetter(type) {
-            switch(type) 
-            {
+            // Arrêter la musique avant de changer de page
+            if (audioPlayer) {
+                stopMusic();
+            }
+            
+            switch(type) {
                 case 'romantic':
                     window.location.href = './lettre-amoure/index.html';
                     break;
@@ -299,12 +585,40 @@
                 case 'OL':
                     window.location.href = './audio/OL/index.html';
                     break;
+                case 'VM':
+                    window.location.href = './audio/VM/index.html';
+                    break;
             }
         }
 
-        // Initialisation
+        // Initialisation principale
         document.addEventListener('DOMContentLoaded', function() {
             createFloatingHearts();
+            setupAutoMusic();
+            
+            // Message d'aide après quelques secondes
+            setTimeout(() => {
+                if (!userInteracted) {
+                    console.log('💡 Cliquez n\'importe où pour activer la musique d\'ambiance');
+                }
+            }, 4000);
+        });
+
+        // Nettoyage avant déchargement
+        window.addEventListener('beforeunload', function() {
+            if (audioPlayer) {
+                stopMusic();
+                audioPlayer.src = '';
+            }
+        });
+
+        // Gestion de la visibilité de la page
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden && isPlaying) {
+                stopMusic();
+            } else if (!document.hidden && userInteracted && audioPlayer) {
+                setTimeout(() => playMusic(), 500);
+            }
         });
     </script>
 </body>
